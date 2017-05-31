@@ -1,7 +1,7 @@
 web/
+env/
 *.pyc
 /conf/tweets-client.ini
 /bin/experiment.py
 /*.sql
 .*.swp
-env/
