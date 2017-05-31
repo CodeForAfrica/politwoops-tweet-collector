@@ -1,0 +1,21 @@
+Metadata-Version: 2.0
+Name: beanstalkc
+Version: 0.4.0
+Summary: A simple beanstalkd client library
+Home-page: http://github.com/earl/beanstalkc
+Author: Andreas Bolka
+Author-email: a@bolka.at
+License: Apache License, Version 2.0
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+
+beanstalkc is a simple beanstalkd client library for Python. `beanstalkd
+<http://kr.github.com/beanstalkd/>`_ is a fast, distributed, in-memory
+workqueue service.
+
+
