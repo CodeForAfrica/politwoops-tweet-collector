@@ -4,3 +4,4 @@ web/
 /bin/experiment.py
 /*.sql
 .*.swp
+env/
