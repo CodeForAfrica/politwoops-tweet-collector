@@ -207,7 +207,7 @@ class DeletedTweetsWorker(object):
     def copy_tweet_to_deleted_table(self, tweet_id):
         cursor = self.database.cursor()
         #Not DRY
-        cursor.execute("""UPDATE `tweets` SET `approved` = 1, `reviewed` = 1, `reviewed_at` = NOW(), `modified` = NOW() WHERE id = %s""", (tweet_id))
+        cursor.execute("""UPDATE `tweets` SET `approved` = 1, `reviewed` = 1, `reviewed_at` = NOW(), `modified` = NOW() WHERE `id` = %s""" % (tweet_id,))
         cursor.execute("""REPLACE INTO `deleted_tweets` SELECT * FROM `tweets` WHERE `id` = %s AND `content` IS NOT NULL""" % (tweet_id))
 
     def handle_possible_rename(self, tweet):
