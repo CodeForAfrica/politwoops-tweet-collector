@@ -292,7 +292,10 @@ class TweetEntityWorker(object):
         url = 'http://s3.amazonaws.com/%s/%s' % (bucket_name, dest_path)
 
         conn = S3Connection(access_key, secret_access_key)
-        bucket = conn.create_bucket(bucket_name)
+        if conn.lookup(bucket_name) is not None:
+            bucket = conn.get_bucket(bucket_name)
+        else:
+            bucket = conn.create_bucket(bucket_name)
         key = Key(bucket)
         key.key = dest_path
         try:

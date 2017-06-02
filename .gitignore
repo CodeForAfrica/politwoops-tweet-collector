@@ -1,4 +1,5 @@
 web/
+env/
 *.pyc
 /conf/tweets-client.ini
 /bin/experiment.py
