@@ -17,6 +17,7 @@ import anyjson
 import smtplib
 import signal
 import pytz
+from dateutil import parser
 from email.mime.text import MIMEText
 from datetime import datetime
 
@@ -167,7 +168,7 @@ class DeletedTweetsWorker(object):
         # cursor.execute("""SELECT COUNT(*) FROM `tweets`""")
         # total_count = cursor.fetchone()[0]
         # self._debug("Total count in table: %s" % total_count)
-
+        date = parser.parse(tweet['created_at'], ignoretz=True)
         retweeted_id = None
         retweeted_content = None
         retweeted_user_name = None
@@ -188,11 +189,12 @@ class DeletedTweetsWorker(object):
                             tweet['id']))
             log.info("Updated tweet {0}", tweet.get('id'))
         else:
-            cursor.execute("""INSERT INTO `tweets` (`id`, `user_name`, `politician_id`, `content`, `created`, `modified`, `tweet`, retweeted_id, retweeted_content, retweeted_user_name) VALUES(%s, %s, %s, %s, NOW(), NOW(), %s, %s, %s, %s)""",
+            cursor.execute("""INSERT INTO `tweets` (`id`, `user_name`, `politician_id`, `content`, `created`, `modified`, `tweet`, retweeted_id, retweeted_content, retweeted_user_name) VALUES(%s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s)""",
                            (tweet['id'],
                             tweet['user']['screen_name'],
                             self.users[tweet['user']['id']],
                             replace_highpoints(tweet['text']),
+                            date,
                             anyjson.serialize(tweet),
                             retweeted_id,
                             retweeted_content,
