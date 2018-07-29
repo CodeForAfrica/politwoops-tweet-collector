@@ -17,6 +17,7 @@ import anyjson
 import smtplib
 import signal
 import pytz
+import tweepy
 from email.mime.text import MIMEText
 from datetime import datetime
 
@@ -59,11 +60,11 @@ class DeletedTweetsWorker(object):
             db=self.config.get('database', 'database'),
             user=self.config.get('database', 'username'),
             passwd=self.config.get('database', 'password'),
-            charset="utf8",
+            charset="utf8mb4",
             use_unicode=True
         )
         self.database.autocommit(True) # needed if you're using InnoDB
-        self.database.cursor().execute('SET NAMES UTF8')
+        self.database.cursor().execute('SET NAMES UTF8MB4')
 
     def init_beanstalk(self):
         tweets_tube = self.config.get('beanstalk', 'tweets_tube')
@@ -141,19 +142,20 @@ class DeletedTweetsWorker(object):
         if num_previous > 0:
             cursor.execute("""UPDATE `tweets` SET `modified` = NOW(), `deleted` = 1 WHERE id = %s""", (tweet['delete']['status']['id'],))
         else:
-            cursor.execute("""REPLACE INTO `tweets` (`id`, `deleted`, `modified`, `created`) VALUES(%s, 1, NOW(), NOW())""", (tweet['delete']['status']['id']))
+            cursor.execute("""REPLACE INTO `tweets` (`id`, `deleted`, `modified`, `created`) VALUES (%s, 1, NOW(), NOW())""", (tweet['delete']['status']['id'],))
         self.copy_tweet_to_deleted_table(tweet['delete']['status']['id'])
 
-        cursor.execute("""SELECT * FROM `tweets` WHERE `id` = %s""", (tweet['delete']['status']['id'],))
-        ref_tweet = cursor.fetchone()
-        self.send_alert(ref_tweet[1], ref_tweet[4], ref_tweet[2])
-
     def handle_new(self, tweet):
+        if tweet.has_key('extended_tweet'):
+            log.info("Extended tweet {0}", tweet.get('extended_tweet'))
+            tweet_text = tweet.get('extended_tweet', {}).get('full_text')
+        else:
+            tweet_text = tweet.get('text')
         log.notice("New tweet {tweet} from user {user_id}/{screen_name}",
                   tweet=tweet.get('id'),
                   user_id=tweet.get('user', {}).get('id'),
                   screen_name=tweet.get('user', {}).get('screen_name'))
-
+        log.notice("Full text: {0}", tweet_text)
         self.handle_possible_rename(tweet)
         cursor = self.database.cursor()
         cursor.execute("""SELECT COUNT(*), `deleted` FROM `tweets` WHERE `id` = %s""", (tweet['id'],))
@@ -164,13 +166,11 @@ class DeletedTweetsWorker(object):
             was_deleted = (int(info[1]) == 1)
         else:
             was_deleted = False
-        # cursor.execute("""SELECT COUNT(*) FROM `tweets`""")
-        # total_count = cursor.fetchone()[0]
-        # self._debug("Total count in table: %s" % total_count)
 
         retweeted_id = None
         retweeted_content = None
         retweeted_user_name = None
+
         if tweet.has_key('retweeted_status'):
             retweeted_id = tweet['retweeted_status']['id']
             retweeted_content = replace_highpoints(tweet['retweeted_status']['text'])
@@ -180,8 +180,8 @@ class DeletedTweetsWorker(object):
             cursor.execute("""UPDATE `tweets` SET `user_name` = %s, `politician_id` = %s, `content` = %s, `tweet`=%s, `retweeted_id`=%s, `retweeted_content`=%s, `retweeted_user_name`=%s, `modified`= NOW() WHERE id = %s""",
                            (tweet['user']['screen_name'],
                             self.users[tweet['user']['id']],
-                            replace_highpoints(tweet['text']),
-                            anyjson.serialize(tweet),
+                            replace_highpoints(tweet_text,""),
+                            replace_highpoints(anyjson.serialize(tweet),""),
                             retweeted_id,
                             retweeted_content,
                             retweeted_user_name,
@@ -192,8 +192,8 @@ class DeletedTweetsWorker(object):
                            (tweet['id'],
                             tweet['user']['screen_name'],
                             self.users[tweet['user']['id']],
-                            replace_highpoints(tweet['text']),
-                            anyjson.serialize(tweet),
+                            replace_highpoints(tweet_text,""),
+                            replace_highpoints(anyjson.serialize(tweet),""),
                             retweeted_id,
                             retweeted_content,
                             retweeted_user_name))
