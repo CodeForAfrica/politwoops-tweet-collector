@@ -145,7 +145,7 @@ def database_cursor(**connect_params):
     log.debug("Connected to database.")
     database.autocommit(True) # needed if you're using InnoDB
     cursor = database.cursor()
-    cursor.execute('SET NAMES UTF8')
+    cursor.execute('SET NAMES UTF8MB4')
     yield cursor
     cursor.close()
     database.close()
@@ -163,7 +163,7 @@ class TweetEntityWorker(object):
             'db': self.config.get('database', 'database'),
             'user': self.config.get('database', 'username'),
             'passwd': self.config.get('database', 'password'),
-            'charset': "utf8",
+            'charset': "utf8mb4",
             'use_unicode': True
         }
 
@@ -338,4 +338,3 @@ if __name__ == "__main__":
                              help='Restart when an error cannot be handled.')
     args = args_parser.parse_args()
     sys.exit(main(args))
-

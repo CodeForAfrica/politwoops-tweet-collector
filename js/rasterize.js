@@ -34,10 +34,8 @@ var inject_polyfills = function (requestData) {
   }
 };
 
-//pass arguments from system.args to phantom.args
-phantom.args = system.args;
 
-if (phantom.args.length < 1 || phantom.args.length > 3) {
+if (system.args.length < 1 || system.args.length > 2) {
   console.log('Usage: rasterize.js URL filename');
   phantom.exit();
 } else {
@@ -48,8 +46,8 @@ if (phantom.args.length < 1 || phantom.args.length > 3) {
     phantom.exit();
   }, OverallTimeout);
 
-  address = phantom.args[1];
-  output = phantom.args[2];
+  address = system.args[0];
+  output = system.args[1];
 
   var render_page = function () {
     var href = page.evaluate(function(){ return window.location.href; });
@@ -100,4 +98,3 @@ if (phantom.args.length < 1 || phantom.args.length > 3) {
   };
   page.open(address);
 }
-
