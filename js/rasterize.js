@@ -1,5 +1,6 @@
 var system = require('system');
 
+
 // OverallTimeout prevents the script from running forever.
 var OverallTimeout = 15 * 1000;
 
@@ -32,6 +33,7 @@ var inject_polyfills = function (requestData) {
     });
   }
 };
+
 
 if (system.args.length < 1 || system.args.length > 2) {
   console.log('Usage: rasterize.js URL filename');

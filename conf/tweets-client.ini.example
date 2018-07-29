@@ -1,4 +1,12 @@
 # fill in Twitter account username and password
+[tweets-get-client]
+username=
+password=
+consumer_key=
+consumer_secret=
+access_token=
+access_token_secret=
+
 [tweets-client]
 username=
 password=
@@ -39,7 +47,9 @@ username=politwoops
 password=politwoops
 table=politicians
 field=twitter_id
+field-fetch=avatar_updated_at,user_name
 conditions=status=1
+conditions-fetch=status=2
 
 # fill in stathat email
 [stathat]

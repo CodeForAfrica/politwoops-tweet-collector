@@ -23,8 +23,7 @@ import anyjson
 import MySQLdb
 import requests
 import logbook
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
+import boto3
 
 import tweetsclient
 import politwoops
@@ -287,19 +286,18 @@ class TweetEntityWorker(object):
         access_key = self.config.get('aws', 'access_key')
         secret_access_key = self.config.get('aws', 'secret_access_key')
         url_prefix = self.config.get('aws', 'url_prefix')
+        region = self.config.get('aws', 'region')
 
         dest_path = os.path.join(url_prefix, dest_filename)
-        url = 'http://s3.amazonaws.com/%s/%s' % (bucket_name, dest_path)
+        url = 'http://s3-%s.amazonaws.com/%s/%s' % (region, bucket_name, dest_path)
 
-        conn = S3Connection(access_key, secret_access_key)
-        bucket = conn.create_bucket(bucket_name)
-        key = Key(bucket)
-        key.key = dest_path
+        session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_access_key, region_name=region)
+        s3 = session.resource('s3')
+
+        bucket = s3.Bucket(bucket_name)
         try:
-            key.set_contents_from_filename(tmp_path,
-                                           policy='public-read',
-                                           headers={'Content-Type': content_type,
-                                                    'Max-Age': 604800 })
+            bucket.upload_file(tmp_path, dest_path, ExtraArgs={'ContentType': content_type,
+                                                               'ACL': "public-read" })
             log.notice("Uploaded image {0} to {1}", tmp_path, url)
             return url
         except IOError as e:

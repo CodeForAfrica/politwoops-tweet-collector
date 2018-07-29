@@ -17,6 +17,7 @@ import anyjson
 import smtplib
 import signal
 import pytz
+from dateutil import parser
 import tweepy
 from email.mime.text import MIMEText
 from datetime import datetime
@@ -167,6 +168,11 @@ class DeletedTweetsWorker(object):
         else:
             was_deleted = False
 
+        # cursor.execute("""SELECT COUNT(*) FROM `tweets`""")
+        # total_count = cursor.fetchone()[0]
+        # self._debug("Total count in table: %s" % total_count)
+        date = parser.parse(tweet['created_at'], ignoretz=True)
+
         retweeted_id = None
         retweeted_content = None
         retweeted_user_name = None
@@ -188,11 +194,12 @@ class DeletedTweetsWorker(object):
                             tweet['id']))
             log.info("Updated tweet {0}", tweet.get('id'))
         else:
-            cursor.execute("""INSERT INTO `tweets` (`id`, `user_name`, `politician_id`, `content`, `created`, `modified`, `tweet`, retweeted_id, retweeted_content, retweeted_user_name) VALUES(%s, %s, %s, %s, NOW(), NOW(), %s, %s, %s, %s)""",
+            cursor.execute("""INSERT INTO `tweets` (`id`, `user_name`, `politician_id`, `content`, `created`, `modified`, `tweet`, retweeted_id, retweeted_content, retweeted_user_name) VALUES(%s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s)""",
                            (tweet['id'],
                             tweet['user']['screen_name'],
                             self.users[tweet['user']['id']],
                             replace_highpoints(tweet_text,""),
+                            date,
                             replace_highpoints(anyjson.serialize(tweet),""),
                             retweeted_id,
                             retweeted_content,
@@ -206,6 +213,8 @@ class DeletedTweetsWorker(object):
 
     def copy_tweet_to_deleted_table(self, tweet_id):
         cursor = self.database.cursor()
+        #Not DRY
+        cursor.execute("""UPDATE `tweets` SET `approved` = 1, `reviewed` = 1, `reviewed_at` = NOW(), `modified` = NOW() WHERE `id` = %s""" % (tweet_id,))
         cursor.execute("""REPLACE INTO `deleted_tweets` SELECT * FROM `tweets` WHERE `id` = %s AND `content` IS NOT NULL""" % (tweet_id))
 
     def handle_possible_rename(self, tweet):

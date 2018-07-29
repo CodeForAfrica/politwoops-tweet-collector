@@ -52,6 +52,16 @@ class MySQLTrackPlugin(tweetsclient.TrackPlugin):
         conn = self._get_database()
         return self._query(conn, tbl, fld, cnd)
 
+    def get_accounts(self):                    
+        tbl = self.config.get('database', 'table')                                                 
+        fld = self.config.get('database', 'field-fetch')                                                 
+        cnd = self.config.get('database', 'conditions-fetch')                                            
+        conn = self._get_database()
+        cursor = conn.cursor()
+        q = "SELECT %s FROM `%s` WHERE %s ORDER BY id DESC" % (fld, tbl, cnd)
+        cursor.execute(q)
+        return cursor.fetchall()
+
     def get_type(self):
         return self.config.get('tweets-client', 'type')
 
